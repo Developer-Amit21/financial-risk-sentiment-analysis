@@ -4,31 +4,36 @@ import streamlit as st
 from bertopic import BERTopic
 
 
-# -------------------------------
-# Download folder from Google Drive
-# -------------------------------
 @st.cache_resource
 def download_model():
-    if not os.path.exists("final_bertopic_model"):
+    import os
+    import gdown
+    import shutil
+
+    model_path = "final_bertopic_model"
+
+    if not os.path.exists(model_path):
         folder_id = "1B39WeJHcArkK12_WsRO968ZVCbqT9mCP"
 
         gdown.download_folder(
             id=folder_id,
-            output="final_bertopic_model",
+            output=model_path,
             quiet=False,
             use_cookies=False
         )
 
-    return "final_bertopic_model"
+        # 🔥 FIX: handle nested folder issue
+        inner_path = os.path.join(model_path, "final_bertopic_model")
+
+        if os.path.exists(inner_path):
+            for file in os.listdir(inner_path):
+                shutil.move(os.path.join(inner_path, file), model_path)
+            shutil.rmtree(inner_path)
+
+    return model_path
 
 
-# -------------------------------
-# Load model
-# -------------------------------
-@st.cache_resource
-def load_model():
-    path = download_model()
-    return BERTopic.load(path)
+st.write(os.listdir("final_bertopic_model"))
 
 
 model = load_model()
