@@ -1,71 +1,56 @@
 import os
 import gdown
 import streamlit as st
-from bertopic import BERTopic
 import shutil
+from pathlib import Path
 
-MODEL_DIR = "final_bertopic_model"
-REQUIRED_FILE = "topics.json"   # critical file for BERTopic
+BASE_DIR = "project_assets"
+FOLDER_ID = "1B39WeJHcArkK12_WsRO968ZVCbqT9mCP"
 
-# -------------------------------
-# Download folder from Google Drive
-# -------------------------------
 @st.cache_resource
-def download_model():
-    import os
-    import gdown
-    import shutil
+def setup_project():
+    if not os.path.exists(BASE_DIR):
+        st.write("📥 Downloading project files...")
 
-    MODEL_DIR = "final_bertopic_model"
-    REQUIRED_FILE = "topics.json"
+        gdown.download_folder(
+            id=FOLDER_ID,
+            output=BASE_DIR,
+            quiet=False,
+            use_cookies=False
+        )
 
-    # ✅ If already correct → skip download
-    if os.path.exists(os.path.join(MODEL_DIR, REQUIRED_FILE)):
-        return MODEL_DIR
+    # -----------------------
+    # AUTO DETECT REAL ROOT
+    # -----------------------
+    contents = os.listdir(BASE_DIR)
 
-    st.warning("📥 Downloading model...")
+    # If 'data' is not directly inside BASE_DIR → go one level deeper
+    if "data" in contents:
+        REAL_ROOT = BASE_DIR
+    else:
+        REAL_ROOT = os.path.join(BASE_DIR, contents[0])
 
-    # Clean broken folder
-    if os.path.exists(MODEL_DIR):
-        shutil.rmtree(MODEL_DIR)
+    # -----------------------
+    # VALIDATION
+    # -----------------------
+    required_path = os.path.join(REAL_ROOT, "data", "final_credible_news_output.csv")
 
-    folder_id = "1B39WeJHcArkK12_WsRO968ZVCbqT9mCP"
-
-    gdown.download_folder(
-        id=folder_id,
-        output=MODEL_DIR,
-        quiet=False,
-        use_cookies=False
-    )
-
-    # 🔥 Detect actual structure safely
-    contents = os.listdir(MODEL_DIR)
-
-    # Case: nested folder exists
-    if len(contents) == 1:
-        inner_path = os.path.join(MODEL_DIR, contents[0])
-
-        if os.path.isdir(inner_path):
-            for f in os.listdir(inner_path):
-                shutil.move(os.path.join(inner_path, f), MODEL_DIR)
-            shutil.rmtree(inner_path)
-
-    # Final validation
-    if not os.path.exists(os.path.join(MODEL_DIR, REQUIRED_FILE)):
-        st.error("❌ Model download incomplete or corrupted (topics.json missing)")
+    if not os.path.exists(required_path):
+        st.error(f"❌ Missing file: {required_path}")
         st.stop()
 
-    return MODEL_DIR
+    return Path(REAL_ROOT)
 
 
-# -------------------------------
-# Load model
-# -------------------------------
-@st.cache_resource
-def load_model():
-    path = download_model()
-    st.success("✅ Model loaded successfully")
-    return BERTopic.load(path)
+PROJECT_ROOT = setup_project()
+
+# -----------------------
+# PATHS (NOW CORRECT)
+# -----------------------
+DATA_DIR = PROJECT_ROOT / "data"
+
+NEWS_OUTPUT_PATH = DATA_DIR / "final_credible_news_output.csv"
+XGB_MODEL_PATH = PROJECT_ROOT / "final_xgb_model.pkl"
 
 
 import requests
@@ -89,17 +74,6 @@ st.title("AlphaGuard | Financial Risk Intelligence")
 # Keep Streamlit inference on CPU. A 4 GB GPU is too small for the cached dashboard
 # models plus notebook sessions, and CUDA OOM stops the whole app.
 device = torch.device("cpu")
-
-# Portable project paths
-PROJECT_ROOT = next((path for path in [Path.cwd(), *Path.cwd().parents] if (path / "data").exists()), Path.cwd())
-
-DATA_DIR = PROJECT_ROOT / "data"
-CNBC_PATH = DATA_DIR / "cnbc_headlines.csv"
-REUTERS_PATH = DATA_DIR / "reuters_headlines.csv"
-NEWS_OUTPUT_PATH = DATA_DIR / "final_credible_news_output.csv"
-XGB_MODEL_PATH = PROJECT_ROOT / "final_xgb_model.pkl"
-DB_PATH = PROJECT_ROOT / "news.db"
-
 
 # --- Logic Functions ---
 def bin3(x):
@@ -315,3 +289,4 @@ with t3:
                               columns=["fin_pos","fin_neg","extraction_confidence","event_risk","subjectivity","source_reliability"])
             risk = float(xgb_model.predict(fv)[0])
             st.write(f"Predicted Risk: **{risk:.2f}** | Risk Class: **{bin3(risk)}** | Confidence: **{conf:.2f}**")
+
