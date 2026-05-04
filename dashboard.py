@@ -68,9 +68,6 @@ def load_model():
     return BERTopic.load(path)
 
 
-topic_model = load_model()
-
-
 import requests
 import pandas as pd
 import joblib
