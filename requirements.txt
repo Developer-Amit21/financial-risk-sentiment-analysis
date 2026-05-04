@@ -11,7 +11,7 @@ tqdm
 joblib
 matplotlib^C
 streamlit
-
+gdown
 
 # ML / classic
 scikit-learn
