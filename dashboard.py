@@ -2,42 +2,63 @@ import os
 import gdown
 import streamlit as st
 from bertopic import BERTopic
+import shutil
 
+MODEL_DIR = "final_bertopic_model"
+REQUIRED_FILE = "topics.json"   # critical file for BERTopic
 
+# -------------------------------
+# Download folder from Google Drive
+# -------------------------------
 @st.cache_resource
 def download_model():
-    import os
-    import gdown
-    import shutil
+    folder_id = "1B39WeJHcArkK12_WsRO968ZVCbqT9mCP"
 
-    model_path = "final_bertopic_model"
+    # ✅ Check if model is already valid
+    if os.path.exists(os.path.join(MODEL_DIR, REQUIRED_FILE)):
+        return MODEL_DIR
 
-    if not os.path.exists(model_path):
-        folder_id = "1B39WeJHcArkK12_WsRO968ZVCbqT9mCP"
+    st.warning("📥 Downloading model... First run may take 1–3 minutes")
 
-        gdown.download_folder(
-            id=folder_id,
-            output=model_path,
-            quiet=False,
-            use_cookies=False
-        )
+    # Remove broken folder if exists
+    if os.path.exists(MODEL_DIR):
+        shutil.rmtree(MODEL_DIR)
 
-        # 🔥 FIX: handle nested folder issue
-        inner_path = os.path.join(model_path, "final_bertopic_model")
+    gdown.download_folder(
+        id=folder_id,
+        output=MODEL_DIR,
+        quiet=False,
+        use_cookies=False
+    )
 
-        if os.path.exists(inner_path):
-            for file in os.listdir(inner_path):
-                shutil.move(os.path.join(inner_path, file), model_path)
-            shutil.rmtree(inner_path)
+    # 🔥 Fix nested folder issue
+    inner = os.path.join(MODEL_DIR, "final_bertopic_model")
+    if os.path.exists(inner):
+        for f in os.listdir(inner):
+            shutil.move(os.path.join(inner, f), MODEL_DIR)
+        shutil.rmtree(inner)
 
-    return model_path
+    # ❌ Final check
+    if not os.path.exists(os.path.join(MODEL_DIR, REQUIRED_FILE)):
+        st.error("❌ Model download failed or incomplete (topics.json missing)")
+        st.stop()
+
+    return MODEL_DIR
 
 
-st.write(os.listdir("final_bertopic_model"))
+# -------------------------------
+# Load model
+# -------------------------------
+@st.cache_resource
+def load_model():
+    path = download_model()
+    st.success("✅ Model loaded successfully")
+    return BERTopic.load(path)
 
 
-model = load_model()
-import streamlit as st
+topic_model = load_model()
+
+
 import requests
 import pandas as pd
 import joblib
