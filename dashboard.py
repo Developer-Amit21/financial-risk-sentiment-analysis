@@ -1,44 +1,34 @@
 import os
-import zipfile
+import gdown
 import streamlit as st
-from huggingface_hub import hf_hub_download
 from bertopic import BERTopic
 
+
 # -------------------------------
-# STEP 1: Download + Extract Model (ONLY ONCE)
+# Download folder from Google Drive
 # -------------------------------
 @st.cache_resource
-def download_and_extract_model():
-    model_path = "final_bertopic_model"
+def download_model():
+    if not os.path.exists("final_bertopic_model"):
+        folder_id = "1B39WeJHcArkK12_WsRO968ZVCbqT9mCP"
 
-    if not os.path.exists(model_path):
-        zip_path = hf_hub_download(
-            repo_id="shawamit76023/finance-model",
-            filename="model.zip"
+        gdown.download_folder(
+            id=folder_id,
+            output="final_bertopic_model",
+            quiet=False,
+            use_cookies=False
         )
 
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(".")
-
-    return model_path
+    return "final_bertopic_model"
 
 
 # -------------------------------
-# STEP 2: Load BERTopic Model
+# Load model
 # -------------------------------
 @st.cache_resource
-def load_bertopic_model():
-    model_path = download_and_extract_model()
-    model = BERTopic.load(model_path)
-    return model
-
-
-# Load model once
-# The code you provided appears to be a comment in a Python script. It mentions "topic_model" as the
-# topic of interest. Comments in Python are lines that are not executed by the interpreter and are
-# used to provide explanations or context for the code. In this case, it seems like the comment is
-# indicating that the code below it is related to a topic model.
-topic_model = load_bertopic_model()
+def load_model():
+    path = download_model()
+    return BERTopic.load(path)
 
 
 model = load_model()
