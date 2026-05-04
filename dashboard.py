@@ -12,17 +12,24 @@ REQUIRED_FILE = "topics.json"   # critical file for BERTopic
 # -------------------------------
 @st.cache_resource
 def download_model():
-    folder_id = "1B39WeJHcArkK12_WsRO968ZVCbqT9mCP"
+    import os
+    import gdown
+    import shutil
 
-    # ✅ Check if model is already valid
+    MODEL_DIR = "final_bertopic_model"
+    REQUIRED_FILE = "topics.json"
+
+    # ✅ If already correct → skip download
     if os.path.exists(os.path.join(MODEL_DIR, REQUIRED_FILE)):
         return MODEL_DIR
 
-    st.warning("📥 Downloading model... First run may take 1–3 minutes")
+    st.warning("📥 Downloading model...")
 
-    # Remove broken folder if exists
+    # Clean broken folder
     if os.path.exists(MODEL_DIR):
         shutil.rmtree(MODEL_DIR)
+
+    folder_id = "1B39WeJHcArkK12_WsRO968ZVCbqT9mCP"
 
     gdown.download_folder(
         id=folder_id,
@@ -31,16 +38,21 @@ def download_model():
         use_cookies=False
     )
 
-    # 🔥 Fix nested folder issue
-    inner = os.path.join(MODEL_DIR, "final_bertopic_model")
-    if os.path.exists(inner):
-        for f in os.listdir(inner):
-            shutil.move(os.path.join(inner, f), MODEL_DIR)
-        shutil.rmtree(inner)
+    # 🔥 Detect actual structure safely
+    contents = os.listdir(MODEL_DIR)
 
-    # ❌ Final check
+    # Case: nested folder exists
+    if len(contents) == 1:
+        inner_path = os.path.join(MODEL_DIR, contents[0])
+
+        if os.path.isdir(inner_path):
+            for f in os.listdir(inner_path):
+                shutil.move(os.path.join(inner_path, f), MODEL_DIR)
+            shutil.rmtree(inner_path)
+
+    # Final validation
     if not os.path.exists(os.path.join(MODEL_DIR, REQUIRED_FILE)):
-        st.error("❌ Model download failed or incomplete (topics.json missing)")
+        st.error("❌ Model download incomplete or corrupted (topics.json missing)")
         st.stop()
 
     return MODEL_DIR
