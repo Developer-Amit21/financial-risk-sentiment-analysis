@@ -5,7 +5,7 @@ scikit-learn==1.4.2
 xgboost==2.0.3
 bertopic==0.16.0
 transformers==4.41.2
-torch==2.0.1
+torch==2.0.0
 gdown==5.1.0
 plotly==5.22.0
 textblob==0.18.0
