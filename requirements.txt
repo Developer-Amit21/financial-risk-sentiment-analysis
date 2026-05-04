@@ -1,45 +1,11 @@
-# Force GPU-enabled PyTorch wheels (CUDA 12.1).
-# If you need a different CUDA build, change `cu121` to e.g. `cu118` or `cu124`.
---index-url https://download.pytorch.org/whl/cu121
---extra-index-url https://pypi.org/simple
-
-# Core
-numpy
-pandas
-scipy
-tqdm
-joblib
-matplotlib^C
-streamlit
-gdown
-
-# ML / classic
-scikit-learn
-xgboost
-
-# NLP
-nltk
-spacy
-textblob
-easygoogletranslate
-fuzzywuzzy
-python-Levenshtein
-
-# Topic modeling / embeddings
-transformers
-sentence-transformers
-bertopic
-umap-learn
-hdbscan
-
-# Data source helper (used in the notebook)
-kagglehub
-
-# GPU (PyTorch) - pulled from the CUDA wheel index above (not CPU).
-torch
-torchvision
-torchaudio
-
-# Optional (uncomment if you actually use TF in your environment)
-tensorflow
-huggingface_hub
+streamlit==1.32.0
+pandas==2.2.2
+numpy==1.26.4
+scikit-learn==1.4.2
+xgboost==2.0.3
+bertopic==0.16.0
+transformers==4.41.2
+torch==2.0.1
+gdown==5.1.0
+plotly==5.22.0
+textblob==0.18.0
